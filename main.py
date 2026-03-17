@@ -2,6 +2,8 @@ import pygame
 
 
 def main():
+    # TODO: Switch the window title
+    # TODO: Increase the window to fit screen
     pygame.init()
     screen = pygame.display.set_mode((800, 600))
     running = True
