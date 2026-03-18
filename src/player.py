@@ -22,16 +22,17 @@ class Player:
             self.velocity_y = -PlayerSettings.JUMP_FORCE
             self.is_grounded = False
 
-    def update(self, dt: float, ground_rect: pygame.Rect) -> None:
+    def update(self, dt: float, platforms: list[pygame.Rect]) -> None:
         self.velocity_y += PlayerSettings.GRAVITY * dt
         self.rect.x = int(self.rect.x + self.velocity_x * dt)
         self.rect.y = int(self.rect.y + self.velocity_y * dt)
         self.is_grounded = False
-        if self.rect.colliderect(ground_rect):
-            if self.velocity_y > 0:
-                self.rect.bottom = ground_rect.top
-                self.velocity_y = 0
-                self.is_grounded = True
+        for platform_rect in platforms:
+            if self.rect.colliderect(platform_rect):
+                if self.velocity_y > 0:
+                    self.rect.bottom = platform_rect.top
+                    self.velocity_y = 0
+                    self.is_grounded = True
 
     def draw(self, screen: pygame.Surface) -> None:
         pygame.draw.rect(screen, Colors.PLAYER, self.rect)
