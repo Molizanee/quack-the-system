@@ -2,7 +2,7 @@ import math
 
 import pygame
 
-from src.constants import Colors, PlayerSettings
+from src.constants import PlayerSettings
 from src.levels import init_levels
 from src.player import Player
 
@@ -21,58 +21,10 @@ OUTLINE_COLOR = (50, 50, 80)
 SUBTITLE_COLOR = (255, 255, 255)
 
 
-def draw_text_with_shadow(
-    screen: pygame.Surface,
-    text: str,
-    font: pygame.font.Font,
-    color: tuple[int, int, int],
-    center: tuple[int, int],
-    shadow_offset: int = 4,
-    shadow_color: tuple[int, int, int] = SHADOW_COLOR,
-) -> None:
-    """Render text with a drop shadow for a 2D game look.
-
-    Args:
-        screen: The surface to draw on.
-        text: The text string to render.
-        font: The pygame font to use.
-        color: The main text color.
-        center: (x, y) center position for the text.
-        shadow_offset: Pixel offset for the shadow.
-        shadow_color: Color of the shadow.
-    """
-    # Draw shadow
-    shadow_surface = font.render(text, True, shadow_color)
-    shadow_rect = shadow_surface.get_rect(
-        center=(center[0] + shadow_offset, center[1] + shadow_offset)
-    )
-    screen.blit(shadow_surface, shadow_rect)
-
-    # Draw outline by rendering in 8 directions
-    for dx, dy in [
-        (-2, 0),
-        (2, 0),
-        (0, -2),
-        (0, 2),
-        (-2, -2),
-        (2, -2),
-        (-2, 2),
-        (2, 2),
-    ]:
-        outline_surface = font.render(text, True, OUTLINE_COLOR)
-        outline_rect = outline_surface.get_rect(center=(center[0] + dx, center[1] + dy))
-        screen.blit(outline_surface, outline_rect)
-
-    # Draw main text
-    main_surface = font.render(text, True, color)
-    main_rect = main_surface.get_rect(center=center)
-    screen.blit(main_surface, main_rect)
-
-
 def main() -> None:
     pygame.init()
     pygame.display.set_caption("Quack The System")
-    icon = pygame.image.load("src/assets/quack_the_system_icon.png")
+    icon = pygame.image.load("src/assets/quack_the_system.png")
     pygame.display.set_icon(icon)
 
     info = pygame.display.Info()
@@ -90,9 +42,7 @@ def main() -> None:
         bg_surface, radius=15, repeat_edge_pixels=True
     )
 
-    # Image for title screen (pre-rendered "Quack The System")
     title_image = pygame.image.load(LETTER_PATH).convert_alpha()
-    # Scale to fit screen width (max 60% of screen width)
     max_width = int(width * 0.6)
     scale_factor = max_width / title_image.get_width()
     title_image = pygame.transform.scale(
@@ -100,7 +50,6 @@ def main() -> None:
     )
     subtitle_font = pygame.font.Font(FONT_PATH, 36)
 
-    # Initialize levels and player
     levels = init_levels(width, height)
     current_level = levels[0]
     ground = current_level.platforms[0]
@@ -183,15 +132,15 @@ def main() -> None:
         elif state == STATE_TRANSITION:
             fade_surface = pygame.Surface((width, height))
             fade_surface.fill((0, 0, 0))
-            
+
             if transition_timer < 0.5:
                 # First half: fade title screen to black
                 screen.blit(bg_blurred, (0, 0))
-                
+
                 title_center = (width // 2, height // 2 - 30)
                 title_rect = title_image.get_rect(center=title_center)
                 screen.blit(title_image, title_rect)
-                
+
                 subtitle_surface = subtitle_font.render(
                     "Pressione espaço para começar", True, SUBTITLE_COLOR
                 )
@@ -199,7 +148,7 @@ def main() -> None:
                     center=(width // 2, title_rect.bottom + 60)
                 )
                 screen.blit(subtitle_surface, subtitle_rect)
-                
+
                 alpha = int((transition_timer / 0.5) * 255)
                 fade_surface.set_alpha(alpha)
                 screen.blit(fade_surface, (0, 0))
@@ -208,7 +157,7 @@ def main() -> None:
                 screen.blit(bg_surface, (0, 0))
                 current_level.draw(screen)
                 player.draw(screen)
-                
+
                 alpha = int((1.0 - (transition_timer - 0.5) / 0.5) * 255)
                 fade_surface.set_alpha(alpha)
                 screen.blit(fade_surface, (0, 0))
