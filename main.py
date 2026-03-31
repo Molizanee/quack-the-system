@@ -51,9 +51,9 @@ def main() -> None:
     subtitle_font = pygame.font.Font(FONT_PATH, 36)
 
     levels = init_levels(width, height)
-    current_level = levels[0]
-    ground = current_level.platforms[0]
-    player = Player(width // 2, ground.rect.top - PlayerSettings.SIZE)
+    current_level, current_spawn = levels[0]
+
+    player = Player(current_spawn[0], current_spawn[1])
 
     state = STATE_TITLE
     running = True
@@ -80,10 +80,12 @@ def main() -> None:
                 )
                 # title_font = pygame.font.Font(FONT_PATH, 96)
                 subtitle_font = pygame.font.Font(FONT_PATH, 36)
+
                 levels = init_levels(width, height)
-                current_level = levels[0]
-                ground = current_level.platforms[0]
-                player.rect.bottom = ground.rect.top
+                current_level, current_spawn = levels[0]
+
+                player.rect.x = current_spawn[0]
+                player.rect.y = current_spawn[1]
 
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_ESCAPE:
