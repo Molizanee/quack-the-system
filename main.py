@@ -2,7 +2,6 @@ import math
 
 import pygame
 
-from src.constants import PlayerSettings
 from src.levels import init_levels
 from src.player import Player
 
@@ -50,7 +49,7 @@ def main() -> None:
     )
     subtitle_font = pygame.font.Font(FONT_PATH, 36)
 
-    levels = init_levels(width, height)
+    levels = init_levels(height)
     current_level, current_spawn = levels[0]
 
     player = Player(current_spawn[0], current_spawn[1])
@@ -81,7 +80,7 @@ def main() -> None:
                 # title_font = pygame.font.Font(FONT_PATH, 96)
                 subtitle_font = pygame.font.Font(FONT_PATH, 36)
 
-                levels = init_levels(width, height)
+                levels = init_levels(height)
                 current_level, current_spawn = levels[0]
 
                 player.rect.x = current_spawn[0]
@@ -99,7 +98,7 @@ def main() -> None:
                     if event.key == pygame.K_SPACE:
                         player.jump()
 
-        # --- Update ---
+            # --- Update ---
         if state == STATE_TRANSITION:
             transition_timer += dt
             if transition_timer >= 1.0:

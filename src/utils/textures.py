@@ -1,22 +1,21 @@
 import pygame
 
-TEXTURE_ROCK_1A_PATH = "src/assets/textures/1a.png"
-TEXTURE_ROCK_1B_PATH = "src/assets/textures/1b.png"
-TEXTURE_ROCK_1C_PATH = "src/assets/textures/1c.png"
-TEXTURE_ROCK_1D_PATH = "src/assets/textures/1d.png"
-TEXTURE_ROCK_1E_PATH = "src/assets/textures/1e.png"
+TEXTURE_PATHS = {
+    "rock_1a": "src/assets/textures/1a.png",
+    "rock_1b": "src/assets/textures/1b.png",
+    "rock_1c": "src/assets/textures/1c.png",
+    "rock_1d": "src/assets/textures/1d.png",
+    "rock_1e": "src/assets/textures/1e.png",
+}
 
 
-def load_texture(path: str) -> pygame.Surface:
+def load_textures() -> dict[str, pygame.Surface]:
     pygame.display.set_mode()
-    texture = pygame.image.load(path).convert_alpha()
-    return texture
+    textures: dict[str, pygame.Surface] = {}
+    for key, path in TEXTURE_PATHS.items():
+        texture = pygame.image.load(path).convert_alpha()
+        textures[key] = texture
+    return textures
 
 
-ROCK_TEXTURES = [
-    load_texture(TEXTURE_ROCK_1A_PATH),
-    load_texture(TEXTURE_ROCK_1B_PATH),
-    load_texture(TEXTURE_ROCK_1C_PATH),
-    load_texture(TEXTURE_ROCK_1D_PATH),
-    load_texture(TEXTURE_ROCK_1E_PATH),
-]
+TEXTURES = load_textures()

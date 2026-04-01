@@ -1,7 +1,7 @@
 import pygame
 
 from src.platform import Platform
-from src.utils.textures import ROCK_TEXTURES
+from src.utils.textures import TEXTURES
 
 
 class Level:
@@ -21,9 +21,9 @@ def create_level_1(
 ) -> tuple[Level, tuple[int, int]]:
 
     platforms = [
-        Platform(200, screen_height - 180, 150, 20, textures=ROCK_TEXTURES),
-        Platform(450, screen_height - 280, 150, 20, textures=ROCK_TEXTURES),
-        Platform(100, screen_height - 380, 120, 20, textures=ROCK_TEXTURES),
+        Platform(200, screen_height - 180, 150, 20, TEXTURES["rock_1b"]),
+        Platform(450, screen_height - 280, 150, 20, TEXTURES["rock_1c"]),
+        Platform(100, screen_height - 380, 120, 20, TEXTURES["rock_1d"]),
     ]
 
     return Level(platforms), (100, 200)
