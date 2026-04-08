@@ -106,8 +106,7 @@ def main() -> None:
 
         if state == STATE_PLAYING:
             keys = pygame.key.get_pressed()
-            player.handle_input(keys)
-            player.update(dt, current_level.get_platform_rects())
+            player.update(dt, keys, current_level.get_platform_rects())
 
         # --- Draw ---
         if state == STATE_TITLE:
