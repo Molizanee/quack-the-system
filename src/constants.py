@@ -8,6 +8,11 @@ class Colors:
     GROUND = Color(100, 100, 100)
 
 
+class WorldSettings:
+    WIDTH = 3000
+    HEIGHT = 1400
+
+
 class PlayerSettings:
     SIZE = 50
     SPEED = 400

@@ -2,8 +2,10 @@ import math
 
 import pygame
 
+from src.constants import WorldSettings
 from src.levels import init_levels
 from src.player import Player
+from src.utils.camera import Camera
 
 # Game states
 STATE_TITLE = "TITLE"
@@ -60,6 +62,8 @@ def main() -> None:
 
     player = Player(current_spawn[0], current_spawn[1])
 
+    camera = Camera(WorldSettings.WIDTH, WorldSettings.HEIGHT)
+
     state = STATE_TITLE
     running = True
     title_time = 0.0  # Timer for subtitle pulse animation
@@ -98,6 +102,7 @@ def main() -> None:
         if state == STATE_PLAYING:
             keys = pygame.key.get_pressed()
             player.update(dt, keys, current_level.get_platform_rects())
+            camera.update(player.rect, base_w, base_h)
 
         # --- Draw (screen is always base_w × base_h; SDL scales to window) ---
         if state == STATE_TITLE:
@@ -145,18 +150,20 @@ def main() -> None:
                 screen.blit(fade_surface, (0, 0))
             else:
                 # Second half: fade from black to playing screen
+                cam = (int(camera.offset_x), int(camera.offset_y))
                 screen.blit(bg_surface, (0, 0))
-                current_level.draw(screen)
-                player.draw(screen)
+                current_level.draw(screen, cam)
+                player.draw(screen, cam)
 
                 alpha = int((1.0 - (transition_timer - 0.5) / 0.5) * 255)
                 fade_surface.set_alpha(alpha)
                 screen.blit(fade_surface, (0, 0))
 
         elif state == STATE_PLAYING:
+            cam = (int(camera.offset_x), int(camera.offset_y))
             screen.blit(bg_surface, (0, 0))
-            current_level.draw(screen)
-            player.draw(screen)
+            current_level.draw(screen, cam)
+            player.draw(screen, cam)
 
         pygame.display.flip()
 

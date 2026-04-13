@@ -10,7 +10,7 @@ class Platform:
         self, x: int, y: int, width: int, height: int, textures: pygame.Surface
     ) -> None:
 
-        platform_blocks = int(x / textures.width)
+        platform_blocks = max(1, int(width / textures.width))
         platform_block_width = textures.width
 
         self.platform_blocks = platform_blocks
@@ -21,12 +21,16 @@ class Platform:
         )
         self.textures = textures
 
-    def draw(self, screen: pygame.Surface) -> None:
-        pygame.draw.rect(screen, Colors.GROUND, self.rect)
+    def draw(self, screen: pygame.Surface, camera: tuple[int, int] = (0, 0)) -> None:
+        offset_rect = self.rect.move(-camera[0], -camera[1])
+        pygame.draw.rect(screen, Colors.GROUND, offset_rect)
         for index in range(int(self.platform_blocks)):
             # random = randint(0, 1)
 
             screen.blit(
                 self.textures,
-                (self.rect.x + index * self.platform_block_width, self.rect.y),
+                (
+                    self.rect.x + index * self.platform_block_width - camera[0],
+                    self.rect.y - camera[1],
+                ),
             )

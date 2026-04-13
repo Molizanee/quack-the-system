@@ -1,6 +1,6 @@
 import pygame
 
-from src.constants import PlayerSettings
+from src.constants import PlayerSettings, WorldSettings
 
 
 class Player(pygame.sprite.Sprite):
@@ -130,6 +130,10 @@ class Player(pygame.sprite.Sprite):
                     self.is_grounded = True
                     break
 
+        # Keep player inside world bounds
+        self.rect.x = max(0, min(self.rect.x, WorldSettings.WIDTH - self.rect.width))
+        self.rect.y = max(0, min(self.rect.y, WorldSettings.HEIGHT - self.rect.height))
+
         # Choose animation state
         if not self.is_grounded:
             self.state = f"jump_{self.facing}"
@@ -163,5 +167,5 @@ class Player(pygame.sprite.Sprite):
 
         self.image = frames[int(self.frame_index)]
 
-    def draw(self, screen: pygame.Surface) -> None:
-        screen.blit(self.image, self.rect.topleft)
+    def draw(self, screen: pygame.Surface, camera: tuple[int, int] = (0, 0)) -> None:
+        screen.blit(self.image, (self.rect.x - camera[0], self.rect.y - camera[1]))
