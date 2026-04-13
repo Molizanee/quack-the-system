@@ -27,29 +27,34 @@ def main() -> None:
     pygame.display.set_icon(icon)
 
     info = pygame.display.Info()
-    width, height = info.current_w, info.current_h
-    screen = pygame.display.set_mode((width, height), pygame.RESIZABLE)
+    base_w, base_h = info.current_w, info.current_h
+    win_w, win_h = base_w, base_h
+    screen = pygame.display.set_mode((win_w, win_h), pygame.RESIZABLE)
+
+    # Virtual surface: all game rendering happens here at fixed resolution,
+    # then gets scaled to the actual window size each frame.
+    virtual_surface = pygame.Surface((base_w, base_h))
 
     clock = pygame.time.Clock()
 
-    # Load and prepare background
+    # Load and prepare background (once, at base resolution)
     bg_surface = pygame.image.load(
         "src/assets/backgrounds/inital_screen_background.png"
     ).convert()
-    bg_surface = pygame.transform.scale(bg_surface, (width, height))
+    bg_surface = pygame.transform.scale(bg_surface, (base_w, base_h))
     bg_blurred = pygame.transform.gaussian_blur(
         bg_surface, radius=15, repeat_edge_pixels=True
     )
 
     title_image = pygame.image.load(LETTER_PATH).convert_alpha()
-    max_width = int(width * 0.6)
+    max_width = int(base_w * 0.6)
     scale_factor = max_width / title_image.get_width()
     title_image = pygame.transform.scale(
         title_image, (max_width, int(title_image.get_height() * scale_factor))
     )
     subtitle_font = pygame.font.Font(FONT_PATH, 36)
 
-    levels = init_levels(height)
+    levels = init_levels(base_h)
     current_level, current_spawn = levels[0]
 
     player = Player(current_spawn[0], current_spawn[1])
@@ -61,6 +66,8 @@ def main() -> None:
 
     while running:
         dt = clock.tick(60) / 1000.0
+        # Cap dt to avoid physics explosion after OS-blocked frames (e.g. during resize)
+        dt = min(dt, 0.05)
         title_time += dt
 
         for event in pygame.event.get():
@@ -68,23 +75,7 @@ def main() -> None:
                 running = False
 
             if event.type == pygame.VIDEORESIZE:
-                width, height = event.w, event.h
-                screen = pygame.display.set_mode((width, height), pygame.RESIZABLE)
-                bg_surface = pygame.image.load(
-                    "src/assets/backgrounds/inital_screen_background.png"
-                ).convert()
-                bg_surface = pygame.transform.scale(bg_surface, (width, height))
-                bg_blurred = pygame.transform.gaussian_blur(
-                    bg_surface, radius=15, repeat_edge_pixels=True
-                )
-                # title_font = pygame.font.Font(FONT_PATH, 96)
-                subtitle_font = pygame.font.Font(FONT_PATH, 36)
-
-                levels = init_levels(height)
-                current_level, current_spawn = levels[0]
-
-                player.rect.x = current_spawn[0]
-                player.rect.y = current_spawn[1]
+                win_w, win_h = event.w, event.h
 
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_ESCAPE:
@@ -97,6 +88,8 @@ def main() -> None:
                 elif state == STATE_PLAYING:
                     if event.key == pygame.K_SPACE:
                         player.jump()
+                    elif event.key == pygame.K_q:
+                        player.quack()
 
             # --- Update ---
         if state == STATE_TRANSITION:
@@ -108,14 +101,14 @@ def main() -> None:
             keys = pygame.key.get_pressed()
             player.update(dt, keys, current_level.get_platform_rects())
 
-        # --- Draw ---
+        # --- Draw (all rendering targets virtual_surface at base resolution) ---
         if state == STATE_TITLE:
-            screen.blit(bg_blurred, (0, 0))
+            virtual_surface.blit(bg_blurred, (0, 0))
 
             # Draw title image directly (pre-rendered "Quack The System")
-            title_center = (width // 2, height // 2 - 30)
+            title_center = (base_w // 2, base_h // 2 - 30)
             title_rect = title_image.get_rect(center=title_center)
-            screen.blit(title_image, title_rect)
+            virtual_surface.blit(title_image, title_rect)
 
             # Draw subtitle with pulsing opacity animation
             pulse = (math.sin(title_time * 3.0) + 1.0) / 2.0  # 0.0 → 1.0
@@ -125,48 +118,51 @@ def main() -> None:
             )
             subtitle_surface.set_alpha(alpha)
             subtitle_rect = subtitle_surface.get_rect(
-                center=(width // 2, title_rect.bottom + 60)
+                center=(base_w // 2, title_rect.bottom + 60)
             )
-            screen.blit(subtitle_surface, subtitle_rect)
+            virtual_surface.blit(subtitle_surface, subtitle_rect)
 
         elif state == STATE_TRANSITION:
-            fade_surface = pygame.Surface((width, height))
+            fade_surface = pygame.Surface((base_w, base_h))
             fade_surface.fill((0, 0, 0))
 
             if transition_timer < 0.5:
                 # First half: fade title screen to black
-                screen.blit(bg_blurred, (0, 0))
+                virtual_surface.blit(bg_blurred, (0, 0))
 
-                title_center = (width // 2, height // 2 - 30)
+                title_center = (base_w // 2, base_h // 2 - 30)
                 title_rect = title_image.get_rect(center=title_center)
-                screen.blit(title_image, title_rect)
+                virtual_surface.blit(title_image, title_rect)
 
                 subtitle_surface = subtitle_font.render(
                     "Pressione espaço para começar", True, SUBTITLE_COLOR
                 )
                 subtitle_rect = subtitle_surface.get_rect(
-                    center=(width // 2, title_rect.bottom + 60)
+                    center=(base_w // 2, title_rect.bottom + 60)
                 )
-                screen.blit(subtitle_surface, subtitle_rect)
+                virtual_surface.blit(subtitle_surface, subtitle_rect)
 
                 alpha = int((transition_timer / 0.5) * 255)
                 fade_surface.set_alpha(alpha)
-                screen.blit(fade_surface, (0, 0))
+                virtual_surface.blit(fade_surface, (0, 0))
             else:
                 # Second half: fade from black to playing screen
-                screen.blit(bg_surface, (0, 0))
-                current_level.draw(screen)
-                player.draw(screen)
+                virtual_surface.blit(bg_surface, (0, 0))
+                current_level.draw(virtual_surface)
+                player.draw(virtual_surface)
 
                 alpha = int((1.0 - (transition_timer - 0.5) / 0.5) * 255)
                 fade_surface.set_alpha(alpha)
-                screen.blit(fade_surface, (0, 0))
+                virtual_surface.blit(fade_surface, (0, 0))
 
         elif state == STATE_PLAYING:
-            screen.blit(bg_surface, (0, 0))
-            current_level.draw(screen)
-            player.draw(screen)
+            virtual_surface.blit(bg_surface, (0, 0))
+            current_level.draw(virtual_surface)
+            player.draw(virtual_surface)
 
+        # Scale virtual surface to actual window and present
+        scaled = pygame.transform.scale(virtual_surface, (win_w, win_h))
+        screen.blit(scaled, (0, 0))
         pygame.display.flip()
 
     pygame.quit()
