@@ -11,5 +11,5 @@ class Colors:
 class PlayerSettings:
     SIZE = 50
     SPEED = 400
-    JUMP_FORCE = 600
+    JUMP_FORCE = 800
     GRAVITY = 1800
