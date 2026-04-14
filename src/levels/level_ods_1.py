@@ -20,44 +20,34 @@ class Level:
 def create_level_1(
     screen_height: int,
 ) -> tuple[Level, tuple[int, int]]:
-    ground_y = WorldSettings.HEIGHT - 40
+    g = WorldSettings.HEIGHT - 40  # ground_y = 1360
 
     platforms = [
-        # Ground spanning the full world width
-        Platform(0, ground_y, WorldSettings.WIDTH, 40, TEXTURES["rock_1b"]),
+        # ── Ground ────────────────────────────────────────────────────────────────
+        Platform(0, g, WorldSettings.WIDTH, 40, TEXTURES["rock_1b"]),
 
-        # --- Near spawn (left area) ---
-        Platform(200, ground_y - 140, 150, 20, TEXTURES["rock_1b"]),
-        Platform(450, ground_y - 240, 150, 20, TEXTURES["rock_1c"]),
-        Platform(100, ground_y - 340, 120, 20, TEXTURES["rock_1d"]),
-        Platform(350, ground_y - 420, 180, 20, TEXTURES["rock_1e"]),
+        # ── Zone A — Dark Stone, Intro (x 0–1100) ─────────────────────────────────
+        # Wide platforms, comfortable gaps — teaches the jump mechanics
+        Platform(200, g - 120, 192, 20, TEXTURES["rock_1a"]),  # P1: easy first step
+        Platform(480, g - 240, 160, 20, TEXTURES["rock_1b"]),  # P2: gap 88px, +120
+        Platform(700, g - 360, 144, 20, TEXTURES["rock_1c"]),  # P3: gap 60px, +120
+        Platform(940, g - 240, 192, 20, TEXTURES["rock_1d"]),  # P4: breather drop
 
-        # --- Middle area ---
-        Platform(700, ground_y - 160, 200, 20, TEXTURES["rock_1a"]),
-        Platform(950, ground_y - 280, 160, 20, TEXTURES["rock_1c"]),
-        Platform(800, ground_y - 400, 140, 20, TEXTURES["rock_1d"]),
-        Platform(1100, ground_y - 180, 180, 20, TEXTURES["rock_1e"]),
-        Platform(1200, ground_y - 320, 200, 20, TEXTURES["rock_1b"]),
+        # ── Zone B — Mossy Ruins, First Real Challenge (x 1100–2100) ─────────────
+        # Narrower platforms, tighter gaps, one hard jump
+        Platform(1200, g - 360, 128, 20, TEXTURES["rock_3a"]),  # P5: gap 68px, +120
+        Platform(1440, g - 480, 112, 20, TEXTURES["rock_3b"]),  # P6: gap 112px, +120
+        Platform(1700, g - 360, 128, 20, TEXTURES["rock_3c"]),  # P7: gap 148px, -120
+        Platform(2000, g - 500,  96, 20, TEXTURES["rock_3d"]),  # P8: gap 172px, +140 (hard)
 
-        # --- Right area ---
-        Platform(1500, ground_y - 150, 220, 20, TEXTURES["rock_1a"]),
-        Platform(1700, ground_y - 280, 160, 20, TEXTURES["rock_1c"]),
-        Platform(1900, ground_y - 200, 180, 20, TEXTURES["rock_1d"]),
-        Platform(1600, ground_y - 420, 200, 20, TEXTURES["rock_1e"]),
-
-        # --- Far right area ---
-        Platform(2100, ground_y - 160, 200, 20, TEXTURES["rock_1b"]),
-        Platform(2350, ground_y - 300, 180, 20, TEXTURES["rock_1a"]),
-        Platform(2500, ground_y - 180, 200, 20, TEXTURES["rock_1c"]),
-        Platform(2700, ground_y - 350, 160, 20, TEXTURES["rock_1d"]),
-
-        # --- High platforms (staircase-like) ---
-        Platform(500, ground_y - 550, 150, 20, TEXTURES["rock_1a"]),
-        Platform(750, ground_y - 650, 150, 20, TEXTURES["rock_1e"]),
-        Platform(1000, ground_y - 750, 180, 20, TEXTURES["rock_1b"]),
-        Platform(1300, ground_y - 800, 200, 20, TEXTURES["rock_1c"]),
+        # ── Zone C — Crystal Sky, Expert (x 2100–3000) ────────────────────────────
+        # 80px platforms, big gaps, near-max heights — clear final ascent
+        Platform(2200, g - 380, 80, 20, TEXTURES["rock_5a"]),   # P9:  gap 104px, -120
+        Platform(2420, g - 540, 80, 20, TEXTURES["rock_5b"]),   # P10: gap 140px, +160 (very hard)
+        Platform(2620, g - 420, 96, 20, TEXTURES["rock_5c"]),   # P11: gap 120px, -120
+        Platform(2760, g - 560, 80, 20, TEXTURES["rock_5d"]),   # P12: gap 44px, +140 (hard)
+        Platform(2880, g - 700, 128, 20, TEXTURES["rock_5a"]),  # P13: summit, +140
     ]
 
-    spawn = (100, ground_y - 80)
+    spawn = (80, g - 60)  # on the ground near left edge
     return Level(platforms), spawn
-
