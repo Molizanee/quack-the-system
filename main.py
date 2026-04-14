@@ -5,12 +5,15 @@ import pygame
 from src.constants import WorldSettings
 from src.levels import init_levels
 from src.player import Player
+from src.trap import EFFECT_REGISTRY
 from src.utils.camera import Camera
 
 # Game states
 STATE_TITLE = "TITLE"
 STATE_TRANSITION = "TRANSITION"
 STATE_PLAYING = "PLAYING"
+
+DEBUG = True  # Set to False when releasing; True shows trap zones during level design
 
 # Custom font path
 FONT_PATH = "src/assets/fonts/PixelPurl.ttf"
@@ -104,6 +107,11 @@ def main() -> None:
             player.update(dt, keys, current_level.get_platform_rects())
             camera.update(player.rect, base_w, base_h)
 
+            fired_effect = current_level.update_traps(player.rect)
+            if fired_effect:
+                EFFECT_REGISTRY[fired_effect](current_level, player)
+                current_level.reset_traps()
+
         # --- Draw (screen is always base_w × base_h; SDL scales to window) ---
         if state == STATE_TITLE:
             screen.blit(bg_blurred, (0, 0))
@@ -152,7 +160,7 @@ def main() -> None:
                 # Second half: fade from black to playing screen
                 cam = (int(camera.offset_x), int(camera.offset_y))
                 screen.blit(bg_surface, (0, 0))
-                current_level.draw(screen, cam)
+                current_level.draw(screen, cam, DEBUG)
                 player.draw(screen, cam)
 
                 alpha = int((1.0 - (transition_timer - 0.5) / 0.5) * 255)
@@ -162,7 +170,7 @@ def main() -> None:
         elif state == STATE_PLAYING:
             cam = (int(camera.offset_x), int(camera.offset_y))
             screen.blit(bg_surface, (0, 0))
-            current_level.draw(screen, cam)
+            current_level.draw(screen, cam, DEBUG)
             player.draw(screen, cam)
 
         pygame.display.flip()

@@ -1,20 +1,45 @@
 import pygame
 
 from src.constants import WorldSettings
+from src.levels.trap_loader import generate_traps
 from src.platform import Platform
+from src.trap import TrapZone
 from src.utils.textures import TEXTURES
 
 
 class Level:
-    def __init__(self, platforms: list[Platform]) -> None:
+    def __init__(
+        self, platforms: list[Platform], traps: list[TrapZone] | None = None
+    ) -> None:
         self.platforms = platforms
+        self.traps = traps or []
 
     def get_platform_rects(self) -> list[pygame.Rect]:
         return [platform.rect for platform in self.platforms]
 
-    def draw(self, screen: pygame.Surface, camera: tuple[int, int] = (0, 0)) -> None:
+    def update_traps(self, player_rect: pygame.Rect) -> str | None:
+        """Returns an effect key if any trap fires this frame, else None."""
+        for trap in self.traps:
+            if trap.check_proximity(player_rect):
+                return trap.trigger()
+        return None
+
+    def reset_traps(self) -> None:
+        """Called on player death — each trap rolls its own World Memory chance."""
+        for trap in self.traps:
+            trap.try_reset()
+
+    def draw(
+        self,
+        screen: pygame.Surface,
+        camera: tuple[int, int] = (0, 0),
+        debug: bool = False,
+    ) -> None:
         for platform in self.platforms:
             platform.draw(screen, camera)
+        if debug:
+            for trap in self.traps:
+                trap.draw_debug(screen, camera)
 
 
 def create_level_1(
@@ -49,5 +74,9 @@ def create_level_1(
         Platform(2880, g - 700, 128, 20, TEXTURES["rock_5a"]),  # P13: summit, +140
     ]
 
+    # Randomise traps across floating platforms (skip ground at index 0)
+    floating_rects = [p.rect for p in platforms[1:]]
+    traps = generate_traps(floating_rects, count=4)
+
     spawn = (80, g - 60)  # on the ground near left edge
-    return Level(platforms), spawn
+    return Level(platforms, traps), spawn

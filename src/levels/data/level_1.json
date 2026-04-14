@@ -1,0 +1,22 @@
+{
+  "traps": [
+    {
+      "id": "trap_01",
+      "type": "proximity",
+      "x": 320,
+      "y": 1240,
+      "radius": 80,
+      "effect": "placeholder",
+      "reset_chance": 0.6
+    },
+    {
+      "id": "trap_02",
+      "type": "proximity",
+      "x": 600,
+      "y": 1120,
+      "radius": 70,
+      "effect": "placeholder",
+      "reset_chance": 1.0
+    }
+  ]
+}
