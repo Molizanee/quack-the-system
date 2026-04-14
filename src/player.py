@@ -67,6 +67,9 @@ class Player(pygame.sprite.Sprite):
         self.image = self.animations[self.state][0]
         self.rect = self.image.get_rect(topleft=(x, y))
 
+        self._spawn_x = x
+        self._spawn_y = y
+
         self.velocity_x: float = 0.0
         self.velocity_y: float = 0.0
         self.is_grounded: bool = False
@@ -166,6 +169,13 @@ class Player(pygame.sprite.Sprite):
                 self.frame_index = 0.0
 
         self.image = frames[int(self.frame_index)]
+
+    def die(self) -> None:
+        """Reset player to spawn position with zeroed velocity."""
+        self.rect.topleft = (int(self._spawn_x), int(self._spawn_y))
+        self.velocity_x = 0.0
+        self.velocity_y = 0.0
+        self.is_grounded = False
 
     def draw(self, screen: pygame.Surface, camera: tuple[int, int] = (0, 0)) -> None:
         screen.blit(self.image, (self.rect.x - camera[0], self.rect.y - camera[1]))
