@@ -1,11 +1,13 @@
 import pygame
 
+from src.utils.paths import resource_path
+
 TEXTURE_PATHS = {
-    "rock_1a": "src/assets/textures/1a.png",
-    "rock_1b": "src/assets/textures/1b.png",
-    "rock_1c": "src/assets/textures/1c.png",
-    "rock_1d": "src/assets/textures/1d.png",
-    "rock_1e": "src/assets/textures/1e.png",
+    "rock_1a": resource_path("src/assets/textures/1a.png"),
+    "rock_1b": resource_path("src/assets/textures/1b.png"),
+    "rock_1c": resource_path("src/assets/textures/1c.png"),
+    "rock_1d": resource_path("src/assets/textures/1d.png"),
+    "rock_1e": resource_path("src/assets/textures/1e.png"),
 }
 
 

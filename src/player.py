@@ -2,6 +2,7 @@ import pygame
 
 from src.constants import PlayerSettings
 from src.platform import Platform
+from src.utils.paths import resource_path
 
 
 class Player(pygame.sprite.Sprite):
@@ -23,7 +24,7 @@ class Player(pygame.sprite.Sprite):
         super().__init__()
 
         sheet = pygame.image.load(
-            "src/assets/duck/ducky_3_spritesheet.png"
+            resource_path("src/assets/duck/ducky_3_spritesheet.png")
         ).convert_alpha()
         frame_w, frame_h = 32, 32
 

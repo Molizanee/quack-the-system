@@ -5,6 +5,7 @@ import pygame
 from src.hud import HUD
 from src.levels import init_levels
 from src.player import Player
+from src.utils.paths import resource_path
 
 # Game states
 STATE_TITLE = "TITLE"
@@ -13,8 +14,8 @@ STATE_PLAYING = "PLAYING"
 STATE_PHASE_COMPLETE = "PHASE_COMPLETE"
 
 # Custom font path
-FONT_PATH = "src/assets/fonts/PixelPurl.ttf"
-LETTER_PATH = "src/assets/letters/quack_the_sytem_main_letter.png"
+FONT_PATH = resource_path("src/assets/fonts/PixelPurl.ttf")
+LETTER_PATH = resource_path("src/assets/letters/quack_the_sytem_main_letter.png")
 
 # Title screen colors (tuples to avoid pygame.Color before init)
 SHADOW_COLOR = (20, 20, 40)
@@ -25,7 +26,7 @@ SUBTITLE_COLOR = (255, 255, 255)
 def main() -> None:
     pygame.init()
     pygame.display.set_caption("Quack The System")
-    icon = pygame.image.load("src/assets/quack_the_system.png")
+    icon = pygame.image.load(resource_path("src/assets/quack_the_system.png"))
     pygame.display.set_icon(icon)
 
     info = pygame.display.Info()
@@ -42,7 +43,7 @@ def main() -> None:
 
     # Load and prepare background (once, at base resolution)
     bg_surface = pygame.image.load(
-        "src/assets/backgrounds/inital_screen_background.png"
+        resource_path("src/assets/backgrounds/inital_screen_background.png")
     ).convert()
     bg_surface = pygame.transform.scale(bg_surface, (base_w, base_h))
     bg_blurred = pygame.transform.gaussian_blur(

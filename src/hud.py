@@ -1,7 +1,9 @@
 import pygame
 
-FONT_PATH = "src/assets/fonts/PixelPurl.ttf"
-SKULL_PATH = "src/assets/icons/Skull.png"
+from src.utils.paths import resource_path
+
+FONT_PATH = resource_path("src/assets/fonts/PixelPurl.ttf")
+SKULL_PATH = resource_path("src/assets/icons/Skull.png")
 
 
 class HUD:

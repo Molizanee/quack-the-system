@@ -7,3 +7,9 @@ requires-python = ">=3.13"
 dependencies = [
     "pygame-ce>=2.5.7",
 ]
+
+[dependency-groups]
+dev = [
+    "pillow>=12.2.0",
+    "pyinstaller>=6.20.0",
+]

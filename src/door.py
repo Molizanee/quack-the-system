@@ -1,10 +1,12 @@
 import pygame
 
+from src.utils.paths import resource_path
+
 
 class Door:
     """Level-exit door. Animates open when the player approaches."""
 
-    SHEET_PATH = "src/assets/elements/doors.png"
+    SHEET_PATH = resource_path("src/assets/elements/doors.png")
     GRID_COLS = 3
     GRID_ROWS = 2
     FRAME_SCALE = 3
