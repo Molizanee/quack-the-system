@@ -1,9 +1,9 @@
 # -*- mode: python ; coding: utf-8 -*-
 """PyInstaller spec file for Quack the System.
 
-Build commands:
-    macOS:   pyinstaller quack_the_system.spec
-    Windows: pyinstaller quack_the_system.spec
+Build commands (always use uv run to ensure correct venv):
+    macOS:   uv run pyinstaller quack_the_system.spec --noconfirm
+    Windows: uv run pyinstaller quack_the_system.spec --noconfirm
 
 The resulting output depends on the platform:
     macOS:   dist/QuackTheSystem.app (app bundle)
@@ -25,6 +25,21 @@ ASSETS_DIR = ROOT / "src" / "assets"
 datas = [
     (str(ASSETS_DIR), "src/assets"),
 ]
+
+# ── Resolve icon path per platform ─────────────────────────────────────
+# Windows needs .ico (Pillow auto-converts from .png if installed).
+# macOS needs .icns (Pillow auto-converts from .png if installed).
+# We point to the PNG and let Pillow handle conversion; if Pillow is
+# missing the build will skip the icon gracefully instead of crashing.
+ICON_PNG = ASSETS_DIR / "quack_the_system.png"
+
+
+def _get_icon():
+    """Return icon path if the source PNG exists, else None."""
+    if ICON_PNG.exists():
+        return str(ICON_PNG)
+    return None
+
 
 # ── Analysis ───────────────────────────────────────────────────────────
 a = Analysis(
@@ -75,7 +90,7 @@ if platform.system() == "Darwin":
     app = BUNDLE(
         coll,
         name="QuackTheSystem.app",
-        icon=str(ASSETS_DIR / "quack_the_system.png"),
+        icon=_get_icon(),
         bundle_identifier="com.quackthesystem.game",
         info_plist={
             "CFBundleName": "Quack The System",
@@ -102,5 +117,5 @@ else:
         upx_exclude=[],
         runtime_tmpdir=None,
         console=False,
-        icon=str(ASSETS_DIR / "quack_the_system.png"),
+        icon=_get_icon(),
     )
