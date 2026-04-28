@@ -4,13 +4,16 @@ import pygame
 
 from src.hud import HUD
 from src.levels import init_levels
+from src.menu import CreditsScreen, MainMenu, PauseOverlay
 from src.player import Player
 from src.utils.paths import resource_path
 
 # Game states
-STATE_TITLE = "TITLE"
+STATE_MENU = "MENU"
+STATE_CREDITS = "CREDITS"
 STATE_TRANSITION = "TRANSITION"
 STATE_PLAYING = "PLAYING"
+STATE_PAUSED = "PAUSED"
 STATE_PHASE_COMPLETE = "PHASE_COMPLETE"
 
 # Custom font path
@@ -65,7 +68,12 @@ def main() -> None:
     hud = HUD()
     deaths = 0
 
-    state = STATE_TITLE
+    # ── Menu screens ──────────────────────────────────────────────────
+    main_menu = MainMenu(bg_blurred, title_image, base_w, base_h)
+    credits_screen = CreditsScreen(bg_blurred, base_w, base_h)
+    pause_overlay = PauseOverlay(base_w, base_h)
+
+    state = STATE_MENU
     running = True
     title_time = 0.0  # Timer for subtitle pulse animation
     transition_timer = 0.0
@@ -83,33 +91,69 @@ def main() -> None:
             if event.type == pygame.QUIT:
                 running = False
 
-            if event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_ESCAPE:
+            # ── Menu state event routing ──────────────────────────────
+            if state == STATE_MENU:
+                if event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
                     running = False
-
-                if state == STATE_TITLE:
-                    if event.key == pygame.K_SPACE:
+                else:
+                    action = main_menu.handle_event(event)
+                    if action == "start":
                         state = STATE_TRANSITION
                         transition_timer = 0.0
-                elif state == STATE_PLAYING:
-                    if event.key == pygame.K_SPACE:
+                    elif action == "credits":
+                        state = STATE_CREDITS
+                    elif action == "quit":
+                        running = False
+
+            elif state == STATE_CREDITS:
+                action = credits_screen.handle_event(event)
+                if action == "back":
+                    state = STATE_MENU
+
+            elif state == STATE_PLAYING:
+                if event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_ESCAPE:
+                        # Capture current frame for blur, then pause
+                        pause_overlay.capture(screen)
+                        state = STATE_PAUSED
+                    elif event.key == pygame.K_SPACE:
                         player.jump()
                     elif event.key == pygame.K_q:
                         player.quack()
-                elif state == STATE_PHASE_COMPLETE:
+
+            elif state == STATE_PAUSED:
+                action = pause_overlay.handle_event(event)
+                if action == "resume":
+                    state = STATE_PLAYING
+                elif action == "restart":
+                    deaths = 0
+                    player.respawn(current_spawn[0], current_spawn[1])
+                    current_level.reset()
+                    state = STATE_PLAYING
+                elif action == "quit":
+                    running = False
+
+            elif state == STATE_PHASE_COMPLETE:
+                if event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_SPACE:
                         deaths = 0
                         player.respawn(current_spawn[0], current_spawn[1])
                         current_level.reset()
                         state = STATE_PLAYING
 
-            # --- Update ---
-        if state == STATE_TRANSITION:
+        # --- Update ---
+        if state == STATE_MENU:
+            main_menu.update(dt)
+
+        elif state == STATE_CREDITS:
+            credits_screen.update(dt)
+
+        elif state == STATE_TRANSITION:
             transition_timer += dt
             if transition_timer >= 1.0:
                 state = STATE_PLAYING
 
-        if state == STATE_PLAYING:
+        elif state == STATE_PLAYING:
             keys = pygame.key.get_pressed()
             player.update(dt, keys, current_level.platforms)
             current_level.update(dt, player.rect, base_h)
@@ -126,49 +170,26 @@ def main() -> None:
                 state = STATE_PHASE_COMPLETE
                 complete_timer = 0.0
 
-        if state == STATE_PHASE_COMPLETE:
+        elif state == STATE_PAUSED:
+            pause_overlay.update(dt)
+
+        elif state == STATE_PHASE_COMPLETE:
             complete_timer += dt
 
         # --- Draw (screen is always base_w × base_h; SDL scales to window) ---
-        if state == STATE_TITLE:
-            screen.blit(bg_blurred, (0, 0))
+        if state == STATE_MENU:
+            main_menu.draw(screen)
 
-            # Draw title image directly (pre-rendered "Quack The System")
-            title_center = (base_w // 2, base_h // 2 - 30)
-            title_rect = title_image.get_rect(center=title_center)
-            screen.blit(title_image, title_rect)
-
-            # Draw subtitle with pulsing opacity animation
-            pulse = (math.sin(title_time * 3.0) + 1.0) / 2.0  # 0.0 → 1.0
-            alpha = int(100 + 155 * pulse)  # Range: 100–255
-            subtitle_surface = subtitle_font.render(
-                "Pressione espaço para começar", True, SUBTITLE_COLOR
-            )
-            subtitle_surface.set_alpha(alpha)
-            subtitle_rect = subtitle_surface.get_rect(
-                center=(base_w // 2, title_rect.bottom + 60)
-            )
-            screen.blit(subtitle_surface, subtitle_rect)
+        elif state == STATE_CREDITS:
+            credits_screen.draw(screen)
 
         elif state == STATE_TRANSITION:
             fade_surface = pygame.Surface((base_w, base_h))
             fade_surface.fill((0, 0, 0))
 
             if transition_timer < 0.5:
-                # First half: fade title screen to black
-                screen.blit(bg_blurred, (0, 0))
-
-                title_center = (base_w // 2, base_h // 2 - 30)
-                title_rect = title_image.get_rect(center=title_center)
-                screen.blit(title_image, title_rect)
-
-                subtitle_surface = subtitle_font.render(
-                    "Pressione espaço para começar", True, SUBTITLE_COLOR
-                )
-                subtitle_rect = subtitle_surface.get_rect(
-                    center=(base_w // 2, title_rect.bottom + 60)
-                )
-                screen.blit(subtitle_surface, subtitle_rect)
+                # First half: fade menu to black
+                main_menu.draw(screen)
 
                 alpha = int((transition_timer / 0.5) * 255)
                 fade_surface.set_alpha(alpha)
@@ -188,6 +209,9 @@ def main() -> None:
             current_level.draw(screen)
             player.draw(screen)
             hud.draw(screen, deaths)
+
+        elif state == STATE_PAUSED:
+            pause_overlay.draw(screen)
 
         elif state == STATE_PHASE_COMPLETE:
             screen.blit(bg_surface, (0, 0))
