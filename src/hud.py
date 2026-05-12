@@ -1,8 +1,8 @@
 import pygame
 
+from src.utils.fonts import FONT_MEDIUM
 from src.utils.paths import resource_path
 
-FONT_PATH = resource_path("src/assets/fonts/PixelPurl.ttf")
 SKULL_PATH = resource_path("src/assets/icons/Skull.png")
 
 
@@ -12,7 +12,7 @@ class HUD:
     PANEL_COLOR = (15, 15, 25, 170)
 
     def __init__(self, font_size: int = 32, icon_size: int = 36) -> None:
-        self.font = pygame.font.Font(FONT_PATH, font_size)
+        self.font = pygame.font.Font(FONT_MEDIUM, font_size)
         icon = pygame.image.load(SKULL_PATH).convert_alpha()
         self.icon = pygame.transform.scale(icon, (icon_size, icon_size))
         self.icon_size = icon_size
