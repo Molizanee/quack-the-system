@@ -8,9 +8,7 @@ import math
 
 import pygame
 
-from src.utils.paths import resource_path
-
-FONT_PATH = resource_path("src/assets/fonts/PixelPurl.ttf")
+from src.utils.fonts import FONT_BOLD, FONT_MEDIUM, FONT_REGULAR, FONT_SEMIBOLD
 
 # ── Colour palette ────────────────────────────────────────────────────────
 PANEL_NORMAL = (30, 30, 55, 180)
@@ -43,7 +41,7 @@ class Button:
         self.base_width = width
         self.base_height = height
 
-        self.font = pygame.font.Font(FONT_PATH, font_size)
+        self.font = pygame.font.Font(FONT_MEDIUM, font_size)
         self._rebuild_rect()
 
         # Animation state
@@ -200,21 +198,21 @@ class CreditsScreen:
     """Shows game credits over the blurred background."""
 
     CREDITS_LINES: list[tuple[str, bool]] = [
-        ("Quack the System", True),   # True = title/heading style
+        ("Créditos", True),   # True = title/heading style
         ("", False),
         ("Desenvolvido por", True),
-        ("Marcos Olizane", False),
+        ("David Alves Molizane Neto", False),
+        ("Eric Aparecido Savassi", False),
+        ("Luis Felipe Travagim Braz Pinto", False),
+        ("Joseph Costa Anjos", False),
+        ("Pedro Antônio Rodrigues", False),
         ("", False),
-        ("Engine", True),
-        ("Python 3.13 + Pygame", False),
-        ("", False),
-        ("Assets", True),
-        ("Sprites — Pixel Frog", False),
-        ("Fonte — PixelPurl", False),
-        ("UI — Kenney.nl", False),
-        ("", False),
-        ("Agradecimentos", True),
-        ("Obrigado por jogar!", False),
+        ("Assets e Produção", True),
+        ("Sprites: Joseph Costa Anjos", False),
+        ("Fonte: PixelPurl", False),
+        ("Documentação: Luis Felipe Travagim Braz Pinto, Eric Aparecido Savassi", False),
+        ("UI / Interface: Pedro Antônio Rodrigues", False),
+        ("Programação Geral: David Alves Molizane Neto", False),
     ]
 
     def __init__(
@@ -227,8 +225,8 @@ class CreditsScreen:
         self.screen_w = screen_w
         self.screen_h = screen_h
 
-        self.title_font = pygame.font.Font(FONT_PATH, 38)
-        self.body_font = pygame.font.Font(FONT_PATH, 28)
+        self.title_font = pygame.font.Font(FONT_SEMIBOLD, 38)
+        self.body_font = pygame.font.Font(FONT_REGULAR, 28)
 
         cx = screen_w // 2
         self.back_button = Button("Voltar", cx, screen_h - 90, width=220, height=56)
@@ -295,7 +293,7 @@ class PauseOverlay:
         self.screen_w = screen_w
         self.screen_h = screen_h
 
-        self.title_font = pygame.font.Font(FONT_PATH, 52)
+        self.title_font = pygame.font.Font(FONT_BOLD, 52)
 
         cx = screen_w // 2
         cy = screen_h // 2

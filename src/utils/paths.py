@@ -14,7 +14,7 @@ def resource_path(relative_path: str) -> str:
 
     Args:
         relative_path: Path relative to the project root (e.g.
-            ``"src/assets/fonts/PixelPurl.ttf"``).
+            ``"src/assets/fonts/PixelifySans-Regular.ttf"``).
 
     Returns:
         Absolute filesystem path to the resource.
