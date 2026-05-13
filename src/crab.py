@@ -16,7 +16,7 @@ import pygame
 
 WIDTH = 52
 HEIGHT = 34
-SPEED = 95.0  # max homing speed (px/s)
+SPEED = 199.5  # max homing speed (px/s) (+50% over 133)
 VERTICAL_SCALE = 0.8  # crabs can rise but feel heavier than sharks
 JITTER_WEIGHT = 0.7  # crabs are jitterier than sharks
 JITTER_REFRESH_MIN = 0.25

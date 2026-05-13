@@ -43,6 +43,7 @@ from src.platform import Platform
 from src.shark import Shark
 from src.utils.textures import TEXTURES
 from src.water import WaterAtmosphere
+from src.water_mine import MineField
 
 BACKGROUND_PATH = "src/assets/backgrounds/ods-14-background.png"
 MUSIC_PATH = "src/assets/sounds/ods-14.mp3"
@@ -94,28 +95,68 @@ def create_level_2(
     rooftop_platforms: list[Platform] = []
     smog_candidates: list[tuple[int, int, int, int]] = []
 
-    # Inimigos radioativos: cada um patrulha uma "sala" da enseada, mas
-    # dentro da própria zona persegue o Duck em x e y com forte jitter
-    # aleatório (definido em Shark/Crab) — o jogador tem que cronometrar
-    # a entrada em cada sala.
-    enemies = [
-        # Tubarões — coluna d'água quase inteira por zona horizontal.
-        Shark(x_min=100,  x_max=460,  y_min=H - 520, y_max=H - 180),
-        Shark(x_min=360,  x_max=720,  y_min=H - 520, y_max=H - 180),
-        Shark(x_min=620,  x_max=980,  y_min=H - 520, y_max=H - 180),
-        Shark(x_min=860,  x_max=1180, y_min=H - 520, y_max=H - 180),
-        # Caranguejos — leito + faixa baixa.
-        Crab(x_min=100,  x_max=420,  y_min=H - 200, y_max=H - 80),
-        Crab(x_min=360,  x_max=680,  y_min=H - 200, y_max=H - 80),
-        Crab(x_min=620,  x_max=940,  y_min=H - 200, y_max=H - 80),
-        Crab(x_min=880,  x_max=1180, y_min=H - 200, y_max=H - 80),
-    ]
+    # Inimigos radioativos: 16 tubarões e 16 caranguejos. Todos
+    # compartilham a tela inteira (sem caixa de patrulha individual),
+    # então o enxame fecha em cima do Duck venha ele de onde vier. As
+    # posições de spawn formam grades só para o frame inicial parecer
+    # arrumado; a partir do primeiro update cada inimigo pode chegar
+    # a qualquer canto da tela.
+    SCREEN_X_MIN = 20
+    SCREEN_X_MAX = 1260
+    SHARK_Y_MIN = 20
+    SHARK_Y_MAX = H - 100
+    CRAB_Y_MIN = 20
+    CRAB_Y_MAX = H - 80
+
+    shark_spawn_xs = [180, 520, 860, 1180]
+    shark_spawn_ys = [H - 540, H - 420, H - 300, H - 180]
+    enemies = []
+    for spawn_x in shark_spawn_xs:
+        for spawn_y in shark_spawn_ys:
+            enemies.append(
+                Shark(
+                    x_min=SCREEN_X_MIN,
+                    x_max=SCREEN_X_MAX,
+                    y_min=SHARK_Y_MIN,
+                    y_max=SHARK_Y_MAX,
+                    start_x=spawn_x,
+                    start_y=spawn_y,
+                )
+            )
+
+    crab_spawn_xs = [100, 260, 420, 580, 740, 900, 1060, 1200]
+    crab_spawn_ys = [H - 220, H - 120]  # acima do leito + rente ao leito
+    for spawn_x in crab_spawn_xs:
+        for spawn_y in crab_spawn_ys:
+            enemies.append(
+                Crab(
+                    x_min=SCREEN_X_MIN,
+                    x_max=SCREEN_X_MAX,
+                    y_min=CRAB_Y_MIN,
+                    y_max=CRAB_Y_MAX,
+                    start_x=spawn_x,
+                    start_y=spawn_y,
+                )
+            )
 
     door = Door(x=1220, ground_y=H - 80)
 
     spawn = (60, 200)
 
     atmosphere = WaterAtmosphere(screen_width, screen_height)
+
+    # Minas radioativas aparecem em pontos aleatórios cobrindo a tela
+    # inteira — da quase superfície até logo acima do leito, e da borda
+    # esquerda à direita. ``min_mine_distance`` força que duas minas não
+    # fiquem coladas, espalhando o campo pela tela inteira.
+    mine_field = MineField(
+        x_min=SCREEN_X_MIN,
+        x_max=SCREEN_X_MAX,
+        y_min=20,
+        y_max=H - 90,
+        max_active=20,
+        min_mine_distance=160,
+    )
 
     level = Level(
         platforms=platforms,
@@ -134,5 +175,6 @@ def create_level_2(
         swim_mode=True,
         atmosphere=atmosphere,
         music_path=MUSIC_PATH,
+        mine_field=mine_field,
     )
     return level, spawn

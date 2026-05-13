@@ -43,6 +43,7 @@ class Level:
         swim_mode: bool = False,
         atmosphere=None,
         music_path: str = "",
+        mine_field=None,
     ) -> None:
         self.platforms = platforms
         self.trap_layouts = trap_layouts
@@ -62,6 +63,7 @@ class Level:
         self.swim_mode = swim_mode
         self.atmosphere = atmosphere
         self.music_path = music_path
+        self.mine_field = mine_field
 
         self.traps = random.choice(self.trap_layouts)
         self.smog_clouds = self._roll_smog_clouds()
@@ -168,12 +170,17 @@ class Level:
         if self.atmosphere is not None:
             self.atmosphere.update(dt, player_rect, player_velocity_y)
 
+        if self.mine_field is not None:
+            self.mine_field.update(dt, player_rect)
+
     def player_lethal_hit(self, player_rect: pygame.Rect) -> bool:
         if any(trap.is_lethal(player_rect) for trap in self.traps):
             return True
         if any(trap.is_lethal(player_rect) for trap in self.dynamic_traps):
             return True
         if any(enemy.is_lethal(player_rect) for enemy in self.enemies):
+            return True
+        if self.mine_field is not None and self.mine_field.is_lethal(player_rect):
             return True
         return False
 
@@ -196,6 +203,8 @@ class Level:
         self._fog_debris_carry = 0.0
         if self.atmosphere is not None:
             self.atmosphere.reset()
+        if self.mine_field is not None:
+            self.mine_field.reset()
 
     def draw(self, screen: pygame.Surface) -> None:
         # Water tint sits between the background and every entity so the
@@ -212,6 +221,8 @@ class Level:
             trap.draw(screen)
         for enemy in self.enemies:
             enemy.draw(screen)
+        if self.mine_field is not None:
+            self.mine_field.draw(screen)
         self.door.draw(screen)
         screen_w = screen.get_width()
         screen_h = screen.get_height()

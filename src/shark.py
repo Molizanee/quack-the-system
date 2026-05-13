@@ -17,11 +17,11 @@ import pygame
 
 WIDTH = 88
 HEIGHT = 36
-SPEED = 170.0  # max speed (px/s) when heading straight at Duck
-VERTICAL_SCALE = 0.7  # cap vertical speed at SPEED * this — feels more shark-like
-JITTER_WEIGHT = 0.55  # 0 = perfect homing, 1 = pure random; bigger = harder to dodge less
-JITTER_REFRESH_MIN = 0.35  # seconds between jitter resamples
-JITTER_REFRESH_MAX = 0.85
+SPEED = 357.0  # max speed (px/s) when heading straight at Duck (+50% over 238)
+VERTICAL_SCALE = 1.0  # vertical chase matches horizontal — sharks dive as fast as they swim
+JITTER_WEIGHT = 0.30  # 0 = perfect homing, 1 = pure random; lower = harder to dodge
+JITTER_REFRESH_MIN = 0.15  # seconds between jitter resamples (more responsive)
+JITTER_REFRESH_MAX = 0.40
 BOB_AMPLITUDE = 3
 BOB_FREQ = 3.5
 
