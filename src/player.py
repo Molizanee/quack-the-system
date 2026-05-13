@@ -83,6 +83,10 @@ class Player(pygame.sprite.Sprite):
         ]
         for sound in self.quack_sounds:
             sound.set_volume(0.8)
+        # Shuffled queue so consecutive presses always pick a *different*
+        # clip — pure random.choice can repeat, which makes it sound like
+        # only one quack ever plays.
+        self._quack_queue: list[pygame.mixer.Sound] = []
 
         self.facing = "right"
         self.state = "idle_right"
@@ -147,11 +151,28 @@ class Player(pygame.sprite.Sprite):
             self.is_grounded = False
 
     def quack(self) -> None:
-        """Start the quack animation (one-shot, plays once then returns to idle)."""
+        """Play a quack SFX; start the animation if not already quacking."""
+        self._play_random_quack()
         if not self.is_quacking:
             self.is_quacking = True
             self.frame_index = 0.0
-            random.choice(self.quack_sounds).play()
+
+    def _play_random_quack(self) -> None:
+        # Drain a shuffled queue rather than calling random.choice each
+        # press: guarantees every clip is heard before any repeats, and
+        # reshuffles so the cycle order itself changes between rounds.
+        if not self._quack_queue:
+            self._quack_queue = list(self.quack_sounds)
+            random.shuffle(self._quack_queue)
+            # Avoid an immediate repeat across the queue boundary.
+            if (
+                len(self._quack_queue) > 1
+                and self._quack_queue[0] is getattr(self, "_last_quack", None)
+            ):
+                self._quack_queue.append(self._quack_queue.pop(0))
+        sound = self._quack_queue.pop(0)
+        self._last_quack = sound
+        sound.play()
 
     def update(
         self, dt: float, keys: pygame.key.ScancodeWrapper, platforms: list[Platform]
