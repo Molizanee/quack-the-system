@@ -1,3 +1,5 @@
+import random
+
 import pygame
 
 from src.constants import PlayerSettings
@@ -73,6 +75,15 @@ class Player(pygame.sprite.Sprite):
             "jump_left": jump_left,
         }
 
+        self.quack_sounds = [
+            pygame.mixer.Sound(
+                resource_path(f"src/assets/sounds/duck/quack-{i}.wav")
+            )
+            for i in range(1, 5)
+        ]
+        for sound in self.quack_sounds:
+            sound.set_volume(0.8)
+
         self.facing = "right"
         self.state = "idle_right"
         self.frame_index = 0.0
@@ -104,6 +115,12 @@ class Player(pygame.sprite.Sprite):
         self.is_grounded: bool = False
         self.is_quacking: bool = False
 
+        # Mario-style water mode: each ``jump()`` press is a swim stroke
+        # (works mid-air, gated by a small cooldown), gravity is gentle,
+        # and fall speed caps low. Toggled per-level from main.py.
+        self.swim_mode: bool = False
+        self._stroke_cooldown: float = 0.0
+
     def handle_input(self, keys: pygame.key.ScancodeWrapper) -> None:
         self.velocity_x = 0.0
 
@@ -115,6 +132,16 @@ class Player(pygame.sprite.Sprite):
             self.facing = "right"
 
     def jump(self) -> None:
+        if self.swim_mode:
+            # Swim stroke: works mid-air, repeatable, gated by cooldown.
+            # Each stroke replaces (not adds to) upward velocity so the
+            # peak height of one stroke is predictable.
+            if self._stroke_cooldown > 0.0:
+                return
+            self.velocity_y = -PlayerSettings.WATER_STROKE_FORCE
+            self._stroke_cooldown = PlayerSettings.WATER_STROKE_COOLDOWN
+            self.is_grounded = False
+            return
         if self.is_grounded:
             self.velocity_y = -PlayerSettings.JUMP_FORCE
             self.is_grounded = False
@@ -124,12 +151,20 @@ class Player(pygame.sprite.Sprite):
         if not self.is_quacking:
             self.is_quacking = True
             self.frame_index = 0.0
+            random.choice(self.quack_sounds).play()
 
     def update(
         self, dt: float, keys: pygame.key.ScancodeWrapper, platforms: list[Platform]
     ) -> None:
         self.handle_input(keys)
-        self.velocity_y += PlayerSettings.GRAVITY * dt
+        if self.swim_mode:
+            self.velocity_y += PlayerSettings.WATER_GRAVITY * dt
+            if self.velocity_y > PlayerSettings.WATER_TERMINAL_VELOCITY:
+                self.velocity_y = PlayerSettings.WATER_TERMINAL_VELOCITY
+            if self._stroke_cooldown > 0.0:
+                self._stroke_cooldown = max(0.0, self._stroke_cooldown - dt)
+        else:
+            self.velocity_y += PlayerSettings.GRAVITY * dt
 
         dx = self.velocity_x * dt
         dy = self.velocity_y * dt
@@ -244,6 +279,7 @@ class Player(pygame.sprite.Sprite):
         self.velocity_y = 0.0
         self.is_grounded = False
         self.is_quacking = False
+        self._stroke_cooldown = 0.0
         self.frame_index = 0.0
         self.facing = "right"
         self.state = "idle_right"

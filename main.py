@@ -1,5 +1,6 @@
 import pygame
 
+from src.controller_tips import ControllerTips
 from src.hud import HUD
 from src.levels import init_levels
 from src.menu import CreditsScreen, MainMenu, PauseOverlay
@@ -41,8 +42,21 @@ def load_phase_background(
     return sharp, blurred
 
 
+def play_level_music(level) -> None:
+    """Replace the currently playing soundtrack with this level's track."""
+    if not getattr(level, "music_path", ""):
+        return
+    pygame.mixer.music.load(resource_path(level.music_path))
+    pygame.mixer.music.play(loops=-1, fade_ms=800)
+
+
 def main() -> None:
+    # 512-byte buffer keeps Q-press latency snappy; pre_init must run before
+    # pygame.init() to take effect.
+    pygame.mixer.pre_init(44100, -16, 2, 512)
     pygame.init()
+    pygame.mixer.set_num_channels(8)
+    pygame.mixer.music.set_volume(0.5)
     pygame.display.set_caption("Quack The System")
     icon = pygame.image.load(resource_path("src/assets/quack_the_system.png"))
     pygame.display.set_icon(icon)
@@ -59,8 +73,9 @@ def main() -> None:
 
     clock = pygame.time.Clock()
 
-    levels = init_levels(base_h)
-    current_level, current_spawn = levels[0]
+    levels = init_levels(base_w, base_h)
+    current_level_index = 0
+    current_level, current_spawn = levels[current_level_index]
 
     # Background is sourced from the current phase. The menu shows the blurred
     # version of the first phase's background as its backdrop.
@@ -74,8 +89,14 @@ def main() -> None:
     )
 
     player = Player(current_spawn[0], current_spawn[1])
+    player.swim_mode = current_level.swim_mode
     hud = HUD()
     deaths = 0
+
+    # First-phase keyboard cheat sheet. Only created once; never re-shown
+    # after dismissal/timeout, even across deaths or future runs in the
+    # same session.
+    controller_tips: ControllerTips | None = ControllerTips(base_w, base_h)
 
     # ── Menu screens ──────────────────────────────────────────────────
     main_menu = MainMenu(bg_blurred, title_image, base_w, base_h)
@@ -109,6 +130,7 @@ def main() -> None:
                     if action == "start":
                         state = STATE_TRANSITION
                         transition_timer = 0.0
+                        play_level_music(current_level)
                     elif action == "credits":
                         state = STATE_CREDITS
                     elif action == "quit":
@@ -132,20 +154,35 @@ def main() -> None:
                     if event.key == pygame.K_ESCAPE:
                         # Capture current frame for blur, then pause
                         pause_overlay.capture(screen)
+                        pygame.mixer.music.pause()
                         state = STATE_PAUSED
                     elif event.key == pygame.K_SPACE:
                         player.jump()
+                        if controller_tips is not None:
+                            controller_tips.player_acted()
                     elif event.key == pygame.K_q:
                         player.quack()
+                        if controller_tips is not None:
+                            controller_tips.player_acted()
+                    elif event.key in (
+                        pygame.K_a,
+                        pygame.K_d,
+                        pygame.K_LEFT,
+                        pygame.K_RIGHT,
+                    ):
+                        if controller_tips is not None:
+                            controller_tips.player_acted()
 
             elif state == STATE_PAUSED:
                 action = pause_overlay.handle_event(event)
                 if action == "resume":
+                    pygame.mixer.music.unpause()
                     state = STATE_PLAYING
                 elif action == "restart":
                     deaths = 0
                     player.respawn(current_spawn[0], current_spawn[1])
                     current_level.reset()
+                    pygame.mixer.music.unpause()
                     state = STATE_PLAYING
                 elif action == "quit":
                     running = False
@@ -156,10 +193,43 @@ def main() -> None:
                 action = outro_screen.handle_event(event)
                 if action == "continue":
                     outro_screen = None
-                    deaths = 0
-                    player.respawn(current_spawn[0], current_spawn[1])
-                    current_level.reset()
-                    state = STATE_MENU
+                    if current_level_index + 1 < len(levels):
+                        # Advance to the next phase: swap level data, reload
+                        # the background, and jump straight into the new
+                        # phase's intro panels.
+                        current_level_index += 1
+                        current_level, current_spawn = levels[current_level_index]
+                        bg_surface, bg_blurred = load_phase_background(
+                            current_level, base_w, base_h
+                        )
+                        deaths = 0
+                        player.respawn(current_spawn[0], current_spawn[1])
+                        player.swim_mode = current_level.swim_mode
+                        current_level.reset()
+                        play_level_music(current_level)
+                        intro_screen = OdsIntro(
+                            screen_w=base_w,
+                            screen_h=base_h,
+                            ods_number=current_level.ods_number,
+                            ods_name=current_level.ods_name,
+                            panels=current_level.intro_panels,
+                            bg_image=bg_surface,
+                        )
+                        state = STATE_ODS_INTRO
+                    else:
+                        # Final phase cleared — wrap back to Phase 1 so the
+                        # menu's "start" begins a fresh playthrough.
+                        current_level_index = 0
+                        current_level, current_spawn = levels[current_level_index]
+                        bg_surface, bg_blurred = load_phase_background(
+                            current_level, base_w, base_h
+                        )
+                        deaths = 0
+                        player.respawn(current_spawn[0], current_spawn[1])
+                        player.swim_mode = current_level.swim_mode
+                        current_level.reset()
+                        pygame.mixer.music.fadeout(600)
+                        state = STATE_MENU
 
         # --- Update ---
         if state == STATE_MENU:
@@ -188,7 +258,14 @@ def main() -> None:
         elif state == STATE_PLAYING:
             keys = pygame.key.get_pressed()
             player.update(dt, keys, current_level.platforms)
-            current_level.update(dt, player.rect, base_h)
+            current_level.update(
+                dt, player.rect, base_h, player_velocity_y=player.velocity_y
+            )
+
+            if controller_tips is not None and current_level_index == 0:
+                controller_tips.update(dt)
+                if controller_tips.done:
+                    controller_tips = None
 
             died = (
                 player.rect.top > base_h
@@ -252,7 +329,10 @@ def main() -> None:
             screen.blit(bg_surface, (0, 0))
             current_level.draw(screen)
             player.draw(screen)
+            current_level.draw_foreground(screen)
             hud.draw(screen, deaths)
+            if controller_tips is not None and current_level_index == 0:
+                controller_tips.draw(screen)
 
         elif state == STATE_PAUSED:
             pause_overlay.draw(screen)
@@ -263,6 +343,7 @@ def main() -> None:
 
         pygame.display.flip()
 
+    pygame.mixer.music.fadeout(400)
     pygame.quit()
 
 
