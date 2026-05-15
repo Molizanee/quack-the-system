@@ -38,7 +38,12 @@ class Rat:
         self.rect.x, self.rect.y = self._spawn
         self.direction = 1
 
-    def update(self, dt: float) -> None:
+    def update(
+        self, dt: float, target_rect: pygame.Rect | None = None
+    ) -> None:
+        # ``target_rect`` is accepted to match the homing-enemy interface
+        # used in later phases; rats ignore it and just patrol.
+        del target_rect
         self.rect.x += int(self.direction * SPEED * dt)
         if self.rect.left <= self.patrol_min_x:
             self.rect.left = self.patrol_min_x
