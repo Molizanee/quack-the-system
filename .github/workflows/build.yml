@@ -14,12 +14,8 @@ jobs:
       matrix:
         include:
           - os: macos-latest
-            script: ./scripts/build_macos.sh
-            shell: bash
             artifact_name: QuackTheSystem-macos
           - os: windows-latest
-            script: scripts\build_windows.bat
-            shell: cmd
             artifact_name: QuackTheSystem-windows
 
     steps:
@@ -34,13 +30,17 @@ jobs:
       - name: Set up Python
         run: uv python install
 
-      - name: Make build script executable (macOS)
+      - name: Run build script (macOS)
         if: matrix.os == 'macos-latest'
-        run: chmod +x ./scripts/build_macos.sh
+        shell: bash
+        run: |
+          chmod +x ./scripts/build_macos.sh
+          ./scripts/build_macos.sh
 
-      - name: Run build script
-        shell: ${{ matrix.shell }}
-        run: ${{ matrix.script }}
+      - name: Run build script (Windows)
+        if: matrix.os == 'windows-latest'
+        shell: cmd
+        run: scripts\build_windows.bat
 
       - name: Upload build artifact
         uses: actions/upload-artifact@v4
