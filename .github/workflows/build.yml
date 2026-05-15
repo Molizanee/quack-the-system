@@ -1,0 +1,51 @@
+name: Build
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Build (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: macos-latest
+            script: ./scripts/build_macos.sh
+            shell: bash
+            artifact_name: QuackTheSystem-macos
+          - os: windows-latest
+            script: scripts\build_windows.bat
+            shell: cmd
+            artifact_name: QuackTheSystem-windows
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+
+      - name: Set up Python
+        run: uv python install
+
+      - name: Make build script executable (macOS)
+        if: matrix.os == 'macos-latest'
+        run: chmod +x ./scripts/build_macos.sh
+
+      - name: Run build script
+        shell: ${{ matrix.shell }}
+        run: ${{ matrix.script }}
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.artifact_name }}
+          path: dist/
+          if-no-files-found: error
+          retention-days: 30
